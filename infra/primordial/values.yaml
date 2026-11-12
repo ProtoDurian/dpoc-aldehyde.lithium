@@ -17,4 +17,4 @@ dpoc:
 
 modules:
   database:
-    main: {type: neon, version: 17}
+    main: {type: neon, version: 17, engine: {neon: {createRole: true}}} # Logto seed creates roles (tenant base role)

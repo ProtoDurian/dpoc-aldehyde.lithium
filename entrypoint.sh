@@ -15,7 +15,8 @@ export DB_URL
 # Two clusters of one landscape can start at once and race on the first seed (it runs in one
 # transaction, so the loser fails cleanly); --swe makes every later run a no-op. Retry.
 i=0
-until npm run cli db seed -- --swe; do
+# --encrypt-base-role: Neon rejects creating the tenant base role without a password (DDL forwarding "no password assigned").
+until npm run cli db seed -- --swe --encrypt-base-role; do
   i=$((i + 1))
   if [ "$i" -ge 15 ]; then echo "lithium: seed failed $i times" >&2; exit 1; fi
   echo "lithium: seed attempt $i failed, retrying" >&2
