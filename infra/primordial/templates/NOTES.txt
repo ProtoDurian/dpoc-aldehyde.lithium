@@ -1,0 +1,1 @@
+dpoc-aldehyde-lithium primordial chart: Database record lithium in {{ .Values.dpoc.platform }}-{{ .Values.dpoc.landscape }}

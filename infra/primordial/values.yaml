@@ -1,0 +1,20 @@
+# Defaults are a lint/local sample (pichu). The row AppSets inject the dpoc block.
+# Logto's own database is a normal Database record: T3 creates the Neon project
+# dpoc-<l>-aldehyde-lithium-main in the landscape's region and writes Secret lithium-database-main
+# into namespace aldehyde of EVERY cluster of the landscape (shared by all replicas).
+# LogtoApp records are NOT rendered here: a LogtoApp is Healthy only once Logto answers, and Logto
+# cannot start before this chart's Database is Ready (G3) — that would deadlock the sync.
+dpoc:
+  platform: aldehyde
+  service: lithium
+  landscape: pichu
+  mark: ""
+  region: SIN
+  roots:
+    - c.dpoc.specpenguin.dev
+    - cf.dpoc.specpenguin.dev
+    - s.dpoc.specpenguin.dev
+
+modules:
+  database:
+    main: {type: neon, version: 17}

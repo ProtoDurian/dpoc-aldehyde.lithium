@@ -1,0 +1,40 @@
+{{- $l := .Values.dpoc.landscape -}}
+{{- $hosts := list -}}
+{{- range .Values.dpoc.roots -}}
+{{- $hosts = append $hosts (printf "lithium.aldehyde.%s.%s" $l .) -}}
+{{- $hosts = append $hosts (printf "admin.aldehyde.%s.%s" $l .) -}}
+{{- end }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Values.dpoc.platform }}
+  labels:
+{{ include "lithium.labels" . | indent 4 }}
+spec:
+  ingressClassName: traefik
+  # no secretName: traefik serves its per-cluster default cert (SAN *.aldehyde.<l>.<root>).
+  tls:
+    - hosts:
+{{ toYaml $hosts | indent 8 }}
+  rules:
+{{- range $root := .Values.dpoc.roots }}
+    - host: {{ printf "lithium.aldehyde.%s.%s" $l $root | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $.Chart.Name }}
+                port: {number: 3001}
+    - host: {{ printf "admin.aldehyde.%s.%s" $l $root | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $.Chart.Name }}
+                port: {number: 3002}
+{{- end }}

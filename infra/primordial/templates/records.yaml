@@ -1,0 +1,20 @@
+{{- $p := .Values.dpoc.platform -}}
+{{- $svc := .Values.dpoc.service -}}
+{{- $l := .Values.dpoc.landscape -}}
+{{- with .Values.modules.database }}
+apiVersion: dpoc.specpenguin.dev/v1alpha1
+kind: Database
+metadata:
+  name: {{ $svc }}
+  namespace: {{ printf "%s-%s" $p $l }}
+  labels:
+    dpoc.specpenguin.dev/platform: {{ $p }}
+    dpoc.specpenguin.dev/service: {{ $svc }}
+    dpoc.specpenguin.dev/landscape: {{ $l }}
+spec:
+  platform: {{ $p }}
+  service: {{ $svc }}
+  landscape: {{ $l }}
+  modules:
+{{ toYaml . | indent 4 }}
+{{- end }}

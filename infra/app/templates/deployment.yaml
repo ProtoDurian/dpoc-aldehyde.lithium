@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Values.dpoc.platform }}
+  labels:
+{{ include "lithium.labels" . | indent 4 }}
+    dpoc.specpenguin.dev/cluster: {{ .Values.dpoc.cluster }}
+spec:
+  replicas: {{ .Values.replicas }}
+  strategy:
+    rollingUpdate: {maxUnavailable: 0, maxSurge: 1} # spike F6 recipe
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+{{ include "lithium.labels" . | indent 8 }}
+    spec:
+      terminationGracePeriodSeconds: 30 # > preStop 5 + drain margin (as tin)
+      containers:
+        - name: logto
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          ports:
+            - {name: http, containerPort: 3001}
+            - {name: admin, containerPort: 3002}
+          env:
+            - name: ENDPOINT
+              value: {{ include "lithium.endpoint" . | quote }}
+            - name: ADMIN_ENDPOINT
+              value: {{ include "lithium.adminEndpoint" . | quote }}
+            - name: TRUST_PROXY_HEADER
+              value: "1"
+            - name: PORT
+              value: "3001"
+            - name: ADMIN_PORT
+              value: "3002"
+            - name: DPOC_CLUSTER
+              value: {{ .Values.dpoc.cluster | quote }}
+          # Logto boots slowly (seed + migrations check): wait up to ~3 min before readiness counts.
+          startupProbe:
+            httpGet: {path: /api/status, port: http}
+            periodSeconds: 3
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: {path: /api/status, port: http}
+            periodSeconds: 2
+            failureThreshold: 2
+          lifecycle:
+            preStop:
+              exec: {command: ["sleep", "5"]}
+          resources:
+            requests: {cpu: 100m, memory: 320Mi}
+            limits: {memory: 1Gi}
+          volumeMounts:
+            # G3: the pod does NOT start until T3 has written the database secret.
+            - name: database-main
+              mountPath: /deps/database-main
+              readOnly: true
+      volumes:
+        - name: database-main
+          secret: {secretName: {{ printf "%s-database-main" .Values.dpoc.service }}} # NOT optional (G3)

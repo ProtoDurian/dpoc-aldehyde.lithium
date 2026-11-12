@@ -1,0 +1,3 @@
+dpoc-aldehyde-lithium app chart (Logto 1.46.0)
+landscape: {{ .Values.dpoc.landscape }}  cluster: {{ .Values.dpoc.cluster }}  replicas: {{ .Values.replicas }}
+issuer: {{ include "lithium.endpoint" . }}/oidc   admin: {{ include "lithium.adminEndpoint" . }}
