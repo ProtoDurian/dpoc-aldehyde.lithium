@@ -9,7 +9,7 @@ DB_URL="$(node -e '
 const s = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
 const host = s.hostDirect || String(s.host).replace(/-pooler(?=\.)/, "");
 const e = encodeURIComponent;
-process.stdout.write("postgres://" + e(s.user) + ":" + e(s.password) + "@" + host + ":" + (s.port || 5432) + "/" + e(s.database) + "?sslmode=require");
+process.stdout.write("postgres://" + e(s.user) + ":" + e(s.password) + "@" + host + ":" + (s.port || 5432) + "/" + e(s.database) + "?sslmode=" + (process.env.DB_SSLMODE || "require") + "");
 ' "$F")"
 export DB_URL
 # Two clusters of one landscape can start at once and race on the first seed (it runs in one
@@ -22,4 +22,6 @@ until npm run cli db seed -- --swe --encrypt-base-role; do
   echo "lithium: seed attempt $i failed, retrying" >&2
   sleep $((2 + i % 4))
 done
+# Logto 1.x core refuses to start while database alterations are undeployed (e.g. after a version bump): deploy them under an advisory lock.
+node /usr/local/bin/lithium-migrate.cjs || { echo "lithium: alteration deploy failed" >&2; exit 1; }
 exec "$@"
