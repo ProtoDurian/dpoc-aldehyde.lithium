@@ -3,6 +3,10 @@ kind: Deployment
 metadata:
   name: {{ .Chart.Name }}
   namespace: {{ .Values.dpoc.platform }}
+  annotations:
+    # round 2: Logto reads its database login only at start (no hot swap). After every rotation (new Secret generation) Reloader must roll it,
+    # otherwise the pods keep a dead password and the Management API answers 401 (found in test). Restart-only workload: no "live" mode.
+    reloader.stakater.com/auto: "true"
   labels:
 {{ include "lithium.labels" . | indent 4 }}
     dpoc.specpenguin.dev/cluster: {{ .Values.dpoc.cluster }}
@@ -36,6 +40,9 @@ spec:
               value: "3001"
             - name: ADMIN_PORT
               value: "3002"
+            # staged signing-key rotation by default: a new key is published at once but only signs after this many seconds (> access token life 600 s)
+            - name: PRIVATE_KEY_ROTATION_GRACE_PERIOD
+              value: "660"
             - name: DPOC_CLUSTER
               value: {{ .Values.dpoc.cluster | quote }}
           # Logto boots slowly (seed + migrations check): wait up to ~3 min before readiness counts.
